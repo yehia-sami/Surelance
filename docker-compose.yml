@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  surelance-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: surelance-sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=SurelanceEscrow2026!
+      - MSSQL_PID=Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'SurelanceEscrow2026!' -C -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - surelance-network
+
+  surelance-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: surelance-api
+    depends_on:
+      surelance-db:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - DatabaseProvider=SqlServer
+      - ConnectionStrings__DefaultConnection=Server=surelance-db,1433;Database=SurelanceDb;User Id=sa;Password=SurelanceEscrow2026!;TrustServerCertificate=True;
+      - ConnectionStrings__HangfireConnection=Server=surelance-db,1433;Database=Surelance_HangfireDb;User Id=sa;Password=SurelanceEscrow2026!;TrustServerCertificate=True;
+      - Jwt__SecretKey=SurelanceSuperSecretEscrowKeyForDevelopment2026!MustBe32BytesOrMore
+      - Jwt__Issuer=SurelanceAPI
+      - Jwt__Audience=SurelanceClients
+    ports:
+      - "5000:5000"
+    networks:
+      - surelance-network
+
+volumes:
+  sqlserver-data:
+
+networks:
+  surelance-network:
+    driver: bridge

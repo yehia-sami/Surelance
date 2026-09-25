@@ -1,0 +1,32 @@
+## Build and Output Folders
+bin/
+obj/
+out/
+TestResults/
+[Dd]ebug/
+[Rr]elease/
+
+## Visual Studio & IDEs
+.vs/
+.idea/
+.vscode/
+*.user
+*.userosscache
+*.suo
+*.sln.docstates
+*.userprefs
+
+## Database and local runtime files
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+*.log
+
+## Local development artifacts & scratch
+.git-backup/
+*.dotnet_home*
+.nuget_packages/
+*.ps1.tmp
+*.tmp

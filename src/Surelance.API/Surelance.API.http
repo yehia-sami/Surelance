@@ -1,0 +1,167 @@
+@baseUrl = http://localhost:5000/api/v1
+
+### 1. Authenticate as Client
+# @name clientLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "client@surelance.com",
+  "password": "Client@123"
+}
+
+### Store Client Token
+@clientToken = {{clientLogin.response.body.token}}
+
+### 2. Authenticate as Freelancer
+# @name freelancerLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "freelancer@surelance.com",
+  "password": "Freelancer@123"
+}
+
+### Store Freelancer Token & ID
+@freelancerToken = {{freelancerLogin.response.body.token}}
+@freelancerId = {{freelancerLogin.response.body.userId}}
+
+### 3. Authenticate as Arbitrator
+# @name arbitratorLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "arbitrator@surelance.com",
+  "password": "Arbitrator@123"
+}
+
+### Store Arbitrator Token
+@arbitratorToken = {{arbitratorLogin.response.body.token}}
+
+### 4. Create Contract (Client)
+# @name createContract
+POST {{baseUrl}}/contracts
+Authorization: Bearer {{clientToken}}
+Content-Type: application/json
+
+{
+  "title": "E-Commerce Microservices Architecture",
+  "description": "Building payment, cart, and catalog microservices with escrow support.",
+  "freelancerId": "{{freelancerId}}"
+}
+
+### Store Contract ID
+@contractId = {{createContract.response.body}}
+
+### 5. Accept Contract (Freelancer)
+POST {{baseUrl}}/contracts/{{contractId}}/accept
+Authorization: Bearer {{freelancerToken}}
+
+### 6. Add Milestone 1 to Contract (Client)
+# @name createMilestone1
+POST {{baseUrl}}/contracts/{{contractId}}/milestones
+Authorization: Bearer {{clientToken}}
+Content-Type: application/json
+
+{
+  "title": "Milestone 1: Architectural Design & Auth",
+  "description": "Deliver OpenAPI specs and JWT authentication service.",
+  "amount": 1500.00
+}
+
+### Store Milestone 1 ID
+@milestone1Id = {{createMilestone1.response.body}}
+
+### 7. Add Milestone 2 to Contract (Client)
+# @name createMilestone2
+POST {{baseUrl}}/contracts/{{contractId}}/milestones
+Authorization: Bearer {{clientToken}}
+Content-Type: application/json
+
+{
+  "title": "Milestone 2: Payment Escrow Service",
+  "description": "Deliver core escrow ledger and database migrations.",
+  "amount": 2500.00
+}
+
+### Store Milestone 2 ID
+@milestone2Id = {{createMilestone2.response.body}}
+
+### 8. Fund Milestone 1 into Escrow (Client)
+POST {{baseUrl}}/milestones/{{milestone1Id}}/fund
+Authorization: Bearer {{clientToken}}
+
+### 9. View Escrow Ledger for Milestone 1 (Audit Trail)
+GET {{baseUrl}}/milestones/{{milestone1Id}}/ledger
+Authorization: Bearer {{clientToken}}
+
+### 10. Submit Milestone 1 (Freelancer)
+POST {{baseUrl}}/milestones/{{milestone1Id}}/submit
+Authorization: Bearer {{freelancerToken}}
+
+### 11. Approve Milestone 1 & Release Funds (Client)
+POST {{baseUrl}}/milestones/{{milestone1Id}}/approve
+Authorization: Bearer {{clientToken}}
+
+### 12. View Milestone 1 Ledger Post-Approval (Balance should be 0)
+GET {{baseUrl}}/milestones/{{milestone1Id}}/ledger
+Authorization: Bearer {{clientToken}}
+
+### 13. Fund Milestone 2 into Escrow (Client)
+POST {{baseUrl}}/milestones/{{milestone2Id}}/fund
+Authorization: Bearer {{clientToken}}
+
+### 14. Submit Milestone 2 (Freelancer)
+POST {{baseUrl}}/milestones/{{milestone2Id}}/submit
+Authorization: Bearer {{freelancerToken}}
+
+### 15. Raise Dispute on Milestone 2 (Client)
+# @name raiseDispute
+POST {{baseUrl}}/milestones/{{milestone2Id}}/dispute
+Authorization: Bearer {{clientToken}}
+Content-Type: application/json
+
+{
+  "reason": "Code does not meet database deadlock recovery specifications."
+}
+
+### Store Dispute ID
+@disputeId = {{raiseDispute.response.body}}
+
+### 16. Arbitrator Reviews Dispute
+GET {{baseUrl}}/disputes/{{disputeId}}
+Authorization: Bearer {{arbitratorToken}}
+
+### 17. Arbitrator Resolves Dispute (Refund to Client)
+POST {{baseUrl}}/disputes/{{disputeId}}/resolve
+Authorization: Bearer {{arbitratorToken}}
+Content-Type: application/json
+
+{
+  "resolution": "RefundClient",
+  "notes": "Reviewed code repository and test suite. Verified deliverables failed core deadlock requirements."
+}
+
+### 18. Arbitrator Attempts to Extend SLA on Resolved Dispute
+# Expected result: 409 Conflict (dispute is no longer Open)
+POST {{baseUrl}}/disputes/{{disputeId}}/extend-sla
+Authorization: Bearer {{arbitratorToken}}
+Content-Type: application/json
+
+{
+  "additionalHours": 48
+}
+
+### 19. View Milestone 2 Ledger Post-Dispute (Balance should be 0)
+GET {{baseUrl}}/milestones/{{milestone2Id}}/ledger
+Authorization: Bearer {{clientToken}}
+
+### 20. Close Contract (Client)
+POST {{baseUrl}}/contracts/{{contractId}}/close
+Authorization: Bearer {{clientToken}}
+
+### 21. Get Full Contract Details & Final Status
+GET {{baseUrl}}/contracts/{{contractId}}
+Authorization: Bearer {{clientToken}}

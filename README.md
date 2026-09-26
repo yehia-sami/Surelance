@@ -37,7 +37,7 @@ Once running:
 - **Swagger UI**: available at `http://localhost:5000`
 - **Hangfire Dashboard**: live at `http://localhost:5000/hangfire`
 
-> **Note on HTTPS**: Only HTTP (port 5000) is bound locally—there is no `https://localhost:5001`. `UseHttpsRedirection()` is intentionally skipped in Development (`if (!app.Environment.IsDevelopment())`) to avoid a confusing "Failed to determine the https port for redirect" warning. HTTPS redirection re-enables automatically outside Development, where a reverse proxy or production certificate terminates TLS.
+> **Note on HTTPS**: Only HTTP (port 5000) is bound locally-there is no `https://localhost:5001`. `UseHttpsRedirection()` is intentionally skipped in Development (`if (!app.Environment.IsDevelopment())`) to avoid a confusing "Failed to determine the https port for redirect" warning. HTTPS redirection re-enables automatically outside Development, where a reverse proxy or production certificate terminates TLS.
 
 ### Running without SQL Server
 To try the API without SQL Server, switch the provider to SQLite (the schema is created from the model; Hangfire uses in-memory storage):
@@ -61,10 +61,10 @@ When the app boots, `DbInitializer` seeds four test accounts with a few realisti
 
 | Role | Email | Password | Notes |
 |---|---|---|---|
-| **Client** | `client@surelance.com` | `Client@123` | Alice — has active and completed contracts |
-| **Freelancer** | `freelancer@surelance.com` | `Freelancer@123` | Bob — has milestones in progress and submitted |
-| **Freelancer** | `elena@surelance.com` | `Freelancer@123` | Elena — has an open disputed milestone and a finished brand project |
-| **Arbitrator** | `arbitrator@surelance.com` | `Arbitrator@123` | Sarah — can review and resolve open disputes |
+| **Client** | `client@surelance.com` | `Client@123` | Alice : has active and completed contracts |
+| **Freelancer** | `freelancer@surelance.com` | `Freelancer@123` | Bob : has milestones in progress and submitted |
+| **Freelancer** | `elena@surelance.com` | `Freelancer@123` | Elena : has an open disputed milestone and a finished brand project |
+| **Arbitrator** | `arbitrator@surelance.com` | `Arbitrator@123` | Sarah : can review and resolve open disputes |
 
 There's also a `Surelance.API.http` file included in the API project if you want to click through the endpoints directly in VS Code / Visual Studio.
 

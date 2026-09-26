@@ -12,20 +12,17 @@ public record CheckDisputeSlaCommand : IRequest<Result<int>>;
 public class CheckDisputeSlaCommandHandler : IRequestHandler<CheckDisputeSlaCommand, Result<int>>
 {
     private readonly IDisputeRepository _disputeRepository;
-    private readonly IMilestoneRepository _milestoneRepository;
     private readonly IEscrowLedgerRepository _escrowLedgerRepository;
     private readonly IDateTimeProvider _dateTimeProvider;
     private readonly IUnitOfWork _unitOfWork;
 
     public CheckDisputeSlaCommandHandler(
         IDisputeRepository disputeRepository,
-        IMilestoneRepository milestoneRepository,
         IEscrowLedgerRepository escrowLedgerRepository,
         IDateTimeProvider dateTimeProvider,
         IUnitOfWork unitOfWork)
     {
         _disputeRepository = disputeRepository;
-        _milestoneRepository = milestoneRepository;
         _escrowLedgerRepository = escrowLedgerRepository;
         _dateTimeProvider = dateTimeProvider;
         _unitOfWork = unitOfWork;
@@ -47,7 +44,9 @@ public class CheckDisputeSlaCommandHandler : IRequestHandler<CheckDisputeSlaComm
         foreach (var dispute in expiredDisputes)
         {
             var milestone = dispute.Milestone;
-            if (milestone == null) continue;
+
+            // Skip inconsistent records instead of throwing, so one bad row can't block every other expired dispute
+            if (milestone == null || milestone.Status != MilestoneStatus.Disputed) continue;
 
             dispute.Resolve(
                 DisputeResolution.RefundClient,

@@ -41,6 +41,11 @@ public class UnitOfWork : IUnitOfWork
         }
         return result;
     }
+
+    public void DiscardChanges()
+    {
+        _context.ChangeTracker.Clear();
+    }
 }
 
 public class ContractRepository : IContractRepository
@@ -89,11 +94,6 @@ public class ContractRepository : IContractRepository
     {
         await _context.Contracts.AddAsync(contract, cancellationToken);
     }
-
-    public void Update(Contract contract)
-    {
-        _context.Contracts.Update(contract);
-    }
 }
 
 public class MilestoneRepository : IMilestoneRepository
@@ -117,14 +117,6 @@ public class MilestoneRepository : IMilestoneRepository
             .FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
     }
 
-    public async Task<Milestone?> GetByIdWithLedgerAsync(Guid id, CancellationToken cancellationToken = default)
-    {
-        return await _context.Milestones
-            .Include(m => m.Contract)
-            .Include(m => m.LedgerEntries)
-            .FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
-    }
-
     public async Task<IReadOnlyList<Milestone>> GetPendingFundedPastDeadlineAsync(DateTime nowUtc, CancellationToken cancellationToken = default)
     {
         return await _context.Milestones
@@ -145,11 +137,6 @@ public class MilestoneRepository : IMilestoneRepository
     {
         await _context.Milestones.AddAsync(milestone, cancellationToken);
     }
-
-    public void Update(Milestone milestone)
-    {
-        _context.Milestones.Update(milestone);
-    }
 }
 
 public class EscrowLedgerRepository : IEscrowLedgerRepository
@@ -167,24 +154,6 @@ public class EscrowLedgerRepository : IEscrowLedgerRepository
             .Where(e => e.MilestoneId == milestoneId)
             .OrderBy(e => e.CreatedAtUtc)
             .ToListAsync(cancellationToken);
-    }
-
-    public async Task<decimal> GetMilestoneBalanceAsync(Guid milestoneId, CancellationToken cancellationToken = default)
-    {
-        var entries = await _context.EscrowLedgerEntries
-            .Where(e => e.MilestoneId == milestoneId)
-            .ToListAsync(cancellationToken);
-
-        decimal balance = 0;
-        foreach (var entry in entries)
-        {
-            if (entry.EntryType == LedgerEntryType.Fund)
-                balance += entry.Amount;
-            else if (entry.EntryType is LedgerEntryType.Release or LedgerEntryType.Refund)
-                balance -= entry.Amount;
-        }
-
-        return balance;
     }
 
     public async Task AddAsync(EscrowLedgerEntry entry, CancellationToken cancellationToken = default)
@@ -228,23 +197,33 @@ public class DisputeRepository : IDisputeRepository
 
     public async Task<IReadOnlyList<Dispute>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        return await _context.Disputes
+        return await DisputesWithDetails()
+            .OrderByDescending(d => d.CreatedAtUtc)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<Dispute>> GetForParticipantAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        return await DisputesWithDetails()
+            .Where(d => d.RaisedByUserId == userId ||
+                        d.Milestone!.Contract!.ClientId == userId ||
+                        d.Milestone!.Contract!.FreelancerId == userId)
+            .OrderByDescending(d => d.CreatedAtUtc)
+            .ToListAsync(cancellationToken);
+    }
+
+    private IQueryable<Dispute> DisputesWithDetails()
+    {
+        return _context.Disputes
             .Include(d => d.Milestone)
                 .ThenInclude(m => m!.Contract)
             .Include(d => d.RaisedByUser)
-            .Include(d => d.Arbitrator)
-            .OrderByDescending(d => d.CreatedAtUtc)
-            .ToListAsync(cancellationToken);
+            .Include(d => d.Arbitrator);
     }
 
     public async Task AddAsync(Dispute dispute, CancellationToken cancellationToken = default)
     {
         await _context.Disputes.AddAsync(dispute, cancellationToken);
-    }
-
-    public void Update(Dispute dispute)
-    {
-        _context.Disputes.Update(dispute);
     }
 }
 
@@ -290,14 +269,6 @@ public class AuditLogRepository : IAuditLogRepository
     public async Task AddAsync(AuditLog log, CancellationToken cancellationToken = default)
     {
         await _context.AuditLogs.AddAsync(log, cancellationToken);
-    }
-
-    public async Task<IReadOnlyList<AuditLog>> GetRecentAsync(int count = 50, CancellationToken cancellationToken = default)
-    {
-        return await _context.AuditLogs
-            .OrderByDescending(a => a.TimestampUtc)
-            .Take(count)
-            .ToListAsync(cancellationToken);
     }
 }
 

@@ -39,12 +39,21 @@ Once running:
 
 > **Note on HTTPS**: Only HTTP (port 5000) is bound locally—there is no `https://localhost:5001`. `UseHttpsRedirection()` is intentionally skipped in Development (`if (!app.Environment.IsDevelopment())`) to avoid a confusing "Failed to determine the https port for redirect" warning. HTTPS redirection re-enables automatically outside Development, where a reverse proxy or production certificate terminates TLS.
 
+### Running without SQL Server
+To try the API without SQL Server, switch the provider to SQLite (the schema is created from the model; Hangfire uses in-memory storage):
+
+```bash
+dotnet run --project src/Surelance.API --DatabaseProvider=Sqlite --ConnectionStrings:DefaultConnection="Data Source=surelance.db"
+```
+
+Optimistic concurrency (`RowVersion`) is only enforced on SQL Server.
+
 ### Running the Tests
 ```bash
 dotnet test
 ```
 
-All 43 unit tests run against in-memory mocks and SQLite, covering the workflow rules, SLA resolution, validation pipeline behaviors, and background job and outbox processing.
+All 46 unit tests run against in-memory mocks and SQLite, covering the workflow rules, SLA resolution, validation pipeline behaviors, background job and outbox processing, and seeding a fresh database.
 
 ## Demo Accounts
 

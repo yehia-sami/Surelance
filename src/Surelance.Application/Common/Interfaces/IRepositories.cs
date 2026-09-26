@@ -15,7 +15,6 @@ public interface IMilestoneRepository
 {
     Task<Milestone?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<Milestone?> GetByIdWithContractAsync(Guid id, CancellationToken cancellationToken = default);
-    Task<Milestone?> GetByIdWithLedgerAsync(Guid id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Milestone>> GetPendingFundedPastDeadlineAsync(DateTime nowUtc, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Milestone>> GetSubmittedBeforeAsync(DateTime submittedBeforeUtc, CancellationToken cancellationToken = default);
     Task AddAsync(Milestone milestone, CancellationToken cancellationToken = default);
@@ -24,7 +23,6 @@ public interface IMilestoneRepository
 public interface IEscrowLedgerRepository
 {
     Task<IReadOnlyList<EscrowLedgerEntry>> GetByMilestoneIdAsync(Guid milestoneId, CancellationToken cancellationToken = default);
-    Task<decimal> GetMilestoneBalanceAsync(Guid milestoneId, CancellationToken cancellationToken = default);
     Task AddAsync(EscrowLedgerEntry entry, CancellationToken cancellationToken = default);
 }
 
@@ -34,6 +32,7 @@ public interface IDisputeRepository
     Task<Dispute?> GetByIdWithMilestoneAndContractAsync(Guid id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Dispute>> GetExpiredOpenDisputesAsync(DateTime nowUtc, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Dispute>> GetAllAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Dispute>> GetForParticipantAsync(Guid userId, CancellationToken cancellationToken = default);
     Task AddAsync(Dispute dispute, CancellationToken cancellationToken = default);
 }
 
@@ -48,7 +47,6 @@ public interface IUserRepository
 public interface IAuditLogRepository
 {
     Task AddAsync(AuditLog log, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<AuditLog>> GetRecentAsync(int count = 50, CancellationToken cancellationToken = default);
 }
 
 public interface IOutboxRepository
@@ -60,4 +58,7 @@ public interface IOutboxRepository
 public interface IUnitOfWork
 {
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+
+    // Drops any pending (unsaved) entity changes, e.g. after a handler failed midway
+    void DiscardChanges();
 }

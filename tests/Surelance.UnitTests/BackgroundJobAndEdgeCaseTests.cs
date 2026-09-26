@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Surelance.Application.Common.Interfaces;
 using Surelance.Application.Common.Models;
@@ -17,6 +18,8 @@ using Surelance.Infrastructure.Jobs;
 using Surelance.Infrastructure.Outbox;
 using Surelance.Infrastructure.Persistence;
 using Surelance.Infrastructure.Persistence.Repositories;
+using Surelance.Infrastructure.Seed;
+using Surelance.Infrastructure.Services;
 using System.Text.Json;
 using Xunit;
 
@@ -288,7 +291,7 @@ public class BackgroundJobAndEdgeCaseTests
         m.Submit(_freelancerId, _now);
         m.Approve(_clientId, _now);
         contract.AddMilestone(m);
-        contract.CompleteIfAllMilestonesSettled();
+        contract.Close();
 
         contract.Status.Should().Be(ContractStatus.Completed);
 
@@ -391,6 +394,39 @@ public class BackgroundJobAndEdgeCaseTests
                 var messages = await repo.GetUnprocessedMessagesAsync(_now, cancellationToken: ct);
 
                 messages.Should().BeEmpty();
+            }
+        }
+        finally
+        {
+            await connection.CloseAsync();
+        }
+    }
+
+    [Fact]
+    public async Task DbInitializer_SeedAsync_OnFreshDatabase_SeedsDemoDataWithoutErrors()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var connection = new Microsoft.Data.Sqlite.SqliteConnection("DataSource=:memory:");
+        await connection.OpenAsync(ct);
+
+        try
+        {
+            var options = new DbContextOptionsBuilder<SurelanceDbContext>()
+                .UseSqlite(connection)
+                .Options;
+
+            using (var seedContext = new SurelanceDbContext(options))
+            {
+                await DbInitializer.SeedAsync(seedContext, new PasswordHasher(), NullLogger.Instance);
+            }
+
+            using (var queryContext = new SurelanceDbContext(options))
+            {
+                (await queryContext.Users.CountAsync(ct)).Should().Be(4);
+                (await queryContext.Contracts.CountAsync(c => c.Status == ContractStatus.Completed, ct)).Should().Be(1);
+
+                // Seed data is historical and must not queue fake notifications
+                (await queryContext.OutboxMessages.CountAsync(ct)).Should().Be(0);
             }
         }
         finally

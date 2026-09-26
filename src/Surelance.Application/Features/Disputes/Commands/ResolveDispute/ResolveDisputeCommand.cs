@@ -32,26 +32,20 @@ public class ResolveDisputeCommandValidator : AbstractValidator<ResolveDisputeCo
 public class ResolveDisputeCommandHandler : IRequestHandler<ResolveDisputeCommand, Result>
 {
     private readonly IDisputeRepository _disputeRepository;
-    private readonly IMilestoneRepository _milestoneRepository;
     private readonly IEscrowLedgerRepository _escrowLedgerRepository;
-    private readonly IContractRepository _contractRepository;
     private readonly ICurrentUserService _currentUserService;
     private readonly IDateTimeProvider _dateTimeProvider;
     private readonly IUnitOfWork _unitOfWork;
 
     public ResolveDisputeCommandHandler(
         IDisputeRepository disputeRepository,
-        IMilestoneRepository milestoneRepository,
         IEscrowLedgerRepository escrowLedgerRepository,
-        IContractRepository contractRepository,
         ICurrentUserService currentUserService,
         IDateTimeProvider dateTimeProvider,
         IUnitOfWork unitOfWork)
     {
         _disputeRepository = disputeRepository;
-        _milestoneRepository = milestoneRepository;
         _escrowLedgerRepository = escrowLedgerRepository;
-        _contractRepository = contractRepository;
         _currentUserService = currentUserService;
         _dateTimeProvider = dateTimeProvider;
         _unitOfWork = unitOfWork;

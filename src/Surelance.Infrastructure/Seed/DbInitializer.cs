@@ -11,7 +11,8 @@ public static class DbInitializer
 {
     public static async Task SeedAsync(SurelanceDbContext context, IPasswordHasher passwordHasher, ILogger logger)
     {
-        if (context.Database.IsRelational())
+        // Migrations are generated for SQL Server; other providers (SQLite) build the schema from the model
+        if (context.Database.IsSqlServer())
         {
             await context.Database.MigrateAsync();
         }
@@ -189,7 +190,15 @@ public static class DbInitializer
         c4m1.Submit(freelancerElena.Id, nowUtc.AddDays(-32));
         c4m1.Approve(clientAlice.Id, nowUtc.AddDays(-30));
 
-        contract4.CompleteIfAllMilestonesSettled();
+        // Close() checks the contract's in-memory milestone list, so it must be populated first
+        contract4.AddMilestone(c4m1);
+        contract4.Close();
+
+        // Seed data is historical; don't turn its domain events into outbox notifications
+        foreach (var milestone in new[] { c1m1, c1m2, c1m3, c1m4, c2m1, c3m1, c4m1 })
+        {
+            milestone.ClearDomainEvents();
+        }
 
         await context.Contracts.AddRangeAsync(contract1, contract2, contract3, contract4);
         await context.Milestones.AddRangeAsync(c1m1, c1m2, c1m3, c1m4, c2m1, c3m1, c4m1);

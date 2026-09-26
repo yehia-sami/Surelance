@@ -5,8 +5,6 @@ using Surelance.Application.Features.Milestones;
 
 namespace Surelance.API.Controllers;
 
-[ApiController]
-[Route("api/v1/[controller]")]
 [Authorize]
 public class ContractsController : ApiControllerBase
 {

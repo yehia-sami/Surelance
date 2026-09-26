@@ -115,6 +115,39 @@ public class ValidationAndAuditTests
             It.IsAny<CancellationToken>()), Times.Once);
 
         unitOfWorkMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        unitOfWorkMock.Verify(u => u.DiscardChanges(), Times.Never);
+    }
+
+    [Fact]
+    public async Task AuditLoggingBehavior_WhenCommandFails_DiscardsPendingChangesBeforeSavingAudit()
+    {
+        var auditRepoMock = new Mock<IAuditLogRepository>();
+        var unitOfWorkMock = new Mock<IUnitOfWork>();
+        var currentUserMock = new Mock<ICurrentUserService>();
+        var dateTimeMock = new Mock<IDateTimeProvider>();
+        var loggerMock = new Mock<ILogger<AuditLoggingBehavior<FundMilestoneCommand, Result>>>();
+
+        var callOrder = new List<string>();
+        unitOfWorkMock.Setup(u => u.DiscardChanges()).Callback(() => callOrder.Add("discard"));
+        unitOfWorkMock.Setup(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .Callback(() => callOrder.Add("save"))
+            .ReturnsAsync(1);
+
+        var behavior = new AuditLoggingBehavior<FundMilestoneCommand, Result>(
+            auditRepoMock.Object,
+            unitOfWorkMock.Object,
+            currentUserMock.Object,
+            dateTimeMock.Object,
+            loggerMock.Object);
+
+        var result = await behavior.Handle(
+            new FundMilestoneCommand(Guid.NewGuid()),
+            (ct) => Task.FromResult(Result.Conflict("Something went wrong midway")),
+            CancellationToken.None);
+
+        result.IsSuccess.Should().BeFalse();
+        auditRepoMock.Verify(a => a.AddAsync(It.Is<AuditLog>(log => !log.Succeeded), It.IsAny<CancellationToken>()), Times.Once);
+        callOrder.Should().Equal("discard", "save");
     }
 
     [Fact]

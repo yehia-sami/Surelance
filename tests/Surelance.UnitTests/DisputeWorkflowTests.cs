@@ -104,9 +104,7 @@ public class DisputeWorkflowTests
 
         var handler = new ResolveDisputeCommandHandler(
             _disputeRepoMock.Object,
-            _milestoneRepoMock.Object,
             _ledgerRepoMock.Object,
-            _contractRepoMock.Object,
             _currentUserMock.Object,
             _dateTimeMock.Object,
             _unitOfWorkMock.Object);
@@ -150,9 +148,7 @@ public class DisputeWorkflowTests
 
         var handler = new ResolveDisputeCommandHandler(
             _disputeRepoMock.Object,
-            _milestoneRepoMock.Object,
             _ledgerRepoMock.Object,
-            _contractRepoMock.Object,
             _currentUserMock.Object,
             _dateTimeMock.Object,
             _unitOfWorkMock.Object);
@@ -200,7 +196,6 @@ public class DisputeWorkflowTests
 
         var handler = new CheckDisputeSlaCommandHandler(
             _disputeRepoMock.Object,
-            _milestoneRepoMock.Object,
             _ledgerRepoMock.Object,
             _dateTimeMock.Object,
             _unitOfWorkMock.Object);

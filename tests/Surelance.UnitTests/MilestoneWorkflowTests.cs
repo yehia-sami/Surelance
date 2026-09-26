@@ -102,6 +102,32 @@ public class MilestoneWorkflowTests
     }
 
     [Fact]
+    public async Task FundMilestone_WhenContractNotYetAccepted_ShouldFailWithConflict()
+    {
+        var draftContract = new Contract(Guid.NewGuid(), "Draft Contract", "Desc", _clientId, _freelancerId, _now);
+        var milestone = new Milestone(Guid.NewGuid(), draftContract.Id, "Milestone 1", "Desc", 1000m, _now.AddDays(7), _now);
+        milestone.SetContract(draftContract);
+
+        _currentUserMock.Setup(u => u.UserId).Returns(_clientId);
+        _milestoneRepoMock.Setup(r => r.GetByIdWithContractAsync(milestone.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(milestone);
+
+        var handler = new FundMilestoneCommandHandler(
+            _milestoneRepoMock.Object,
+            _ledgerRepoMock.Object,
+            _currentUserMock.Object,
+            _dateTimeMock.Object,
+            _unitOfWorkMock.Object);
+
+        var result = await handler.Handle(new FundMilestoneCommand(milestone.Id), CancellationToken.None);
+
+        result.IsSuccess.Should().BeFalse();
+        result.ErrorType.Should().Be(ErrorType.Conflict);
+        milestone.Status.Should().Be(MilestoneStatus.Pending);
+        _ledgerRepoMock.Verify(l => l.AddAsync(It.IsAny<EscrowLedgerEntry>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
     public async Task FundMilestone_WhenNonClientCalls_ShouldFail()
     {
         var (_, milestone) = CreateTestContractAndMilestone(MilestoneStatus.Pending);
@@ -162,7 +188,6 @@ public class MilestoneWorkflowTests
         var handler = new ApproveMilestoneCommandHandler(
             _milestoneRepoMock.Object,
             _ledgerRepoMock.Object,
-            _contractRepoMock.Object,
             _currentUserMock.Object,
             _dateTimeMock.Object,
             _unitOfWorkMock.Object);
@@ -196,7 +221,6 @@ public class MilestoneWorkflowTests
         var handler = new ApproveMilestoneCommandHandler(
             _milestoneRepoMock.Object,
             _ledgerRepoMock.Object,
-            _contractRepoMock.Object,
             _currentUserMock.Object,
             _dateTimeMock.Object,
             _unitOfWorkMock.Object);

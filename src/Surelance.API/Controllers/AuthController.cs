@@ -5,8 +5,6 @@ using Surelance.Application.Features.Auth;
 
 namespace Surelance.API.Controllers;
 
-[ApiController]
-[Route("api/v1/[controller]")]
 public class AuthController : ApiControllerBase
 {
     private readonly ICurrentUserService _currentUserService;

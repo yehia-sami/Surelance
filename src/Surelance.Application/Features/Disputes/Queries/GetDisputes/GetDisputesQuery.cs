@@ -25,15 +25,10 @@ public class GetDisputesQueryHandler : IRequestHandler<GetDisputesQuery, Result<
             return Result<IReadOnlyList<DisputeDto>>.Failure("User is not authenticated.");
         }
 
-        var allDisputes = await _disputeRepository.GetAllAsync(cancellationToken);
-        var userId = _currentUserService.UserId.Value;
-        var role = _currentUserService.Role.Value;
-
-        var disputes = role == UserRole.Arbitrator
-            ? allDisputes
-            : allDisputes.Where(d => d.RaisedByUserId == userId ||
-                                     d.Milestone?.Contract?.ClientId == userId ||
-                                     d.Milestone?.Contract?.FreelancerId == userId).ToList();
+        // Arbitrators see every dispute; everyone else only sees disputes on their own contracts (filtered in SQL)
+        var disputes = _currentUserService.Role.Value == UserRole.Arbitrator
+            ? await _disputeRepository.GetAllAsync(cancellationToken)
+            : await _disputeRepository.GetForParticipantAsync(_currentUserService.UserId.Value, cancellationToken);
 
         var dtos = disputes.Select(d => new DisputeDto(
             d.Id,

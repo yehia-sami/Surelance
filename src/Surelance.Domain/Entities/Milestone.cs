@@ -130,16 +130,6 @@ public class Milestone : BaseEntity
         }
     }
 
-    public void AddLedgerEntry(EscrowLedgerEntry entry)
-    {
-        _ledgerEntries.Add(entry);
-    }
-
-    public void AddDispute(Dispute dispute)
-    {
-        _disputes.Add(dispute);
-    }
-
     private void EnsureNotLocked()
     {
         if (Status is MilestoneStatus.Released or MilestoneStatus.Refunded)

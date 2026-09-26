@@ -5,8 +5,6 @@ using Surelance.Domain.Enums;
 
 namespace Surelance.API.Controllers;
 
-[ApiController]
-[Route("api/v1/[controller]")]
 [Authorize]
 public class DisputesController : ApiControllerBase
 {
@@ -47,7 +45,7 @@ public class DisputesController : ApiControllerBase
     }
 
     /// <summary>
-    /// Evaluates expired disputes against the 48-hour SLA and applies the default resolution based on who raised it.
+    /// Evaluates expired disputes against the 48-hour SLA and refunds the client by default (no arbitrator decision).
     /// </summary>
     [HttpPost("sla/check")]
     [Authorize(Roles = "Arbitrator")]

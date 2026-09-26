@@ -26,7 +26,6 @@ public class ApproveMilestoneCommandHandler : IRequestHandler<ApproveMilestoneCo
 {
     private readonly IMilestoneRepository _milestoneRepository;
     private readonly IEscrowLedgerRepository _escrowLedgerRepository;
-    private readonly IContractRepository _contractRepository;
     private readonly ICurrentUserService _currentUserService;
     private readonly IDateTimeProvider _dateTimeProvider;
     private readonly IUnitOfWork _unitOfWork;
@@ -34,14 +33,12 @@ public class ApproveMilestoneCommandHandler : IRequestHandler<ApproveMilestoneCo
     public ApproveMilestoneCommandHandler(
         IMilestoneRepository milestoneRepository,
         IEscrowLedgerRepository escrowLedgerRepository,
-        IContractRepository contractRepository,
         ICurrentUserService currentUserService,
         IDateTimeProvider dateTimeProvider,
         IUnitOfWork unitOfWork)
     {
         _milestoneRepository = milestoneRepository;
         _escrowLedgerRepository = escrowLedgerRepository;
-        _contractRepository = contractRepository;
         _currentUserService = currentUserService;
         _dateTimeProvider = dateTimeProvider;
         _unitOfWork = unitOfWork;

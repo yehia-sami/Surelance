@@ -53,13 +53,13 @@ public class CreateContractCommandHandler : IRequestHandler<CreateContractComman
     {
         if (_currentUserService.Role != UserRole.Client || !_currentUserService.UserId.HasValue)
         {
-            return Result<Guid>.Failure("Only clients can create contracts.");
+            return Result<Guid>.Forbidden("Only clients can create contracts.");
         }
 
         var freelancer = await _userRepository.GetByIdAsync(request.FreelancerId, cancellationToken);
         if (freelancer == null || freelancer.Role != UserRole.Freelancer)
         {
-            return Result<Guid>.Failure("The specified freelancer does not exist or is not registered as a freelancer.");
+            return Result<Guid>.NotFound("The specified freelancer does not exist or is not registered as a freelancer.");
         }
 
         if (freelancer.Id == _currentUserService.UserId.Value)

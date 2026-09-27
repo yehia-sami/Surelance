@@ -24,6 +24,14 @@ public class SurelanceDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+
+        // SQLite has no rowversion type, so the database can't generate these tokens and inserts would
+        // fail on NOT NULL. There EF writes the value itself; optimistic concurrency is enforced on SQL Server.
+        if (!Database.IsSqlServer())
+        {
+            modelBuilder.Entity<Milestone>().Property(m => m.RowVersion).ValueGeneratedNever();
+            modelBuilder.Entity<Dispute>().Property(d => d.RowVersion).ValueGeneratedNever();
+        }
     }
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

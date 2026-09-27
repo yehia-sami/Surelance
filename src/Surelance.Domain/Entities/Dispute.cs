@@ -44,11 +44,6 @@ public class Dispute : BaseEntity
         CreatedAtUtc = createdAtUtc;
     }
 
-    public void AssignArbitrator(Guid arbitratorId)
-    {
-        ArbitratorId = arbitratorId;
-    }
-
     internal void SetMilestone(Milestone milestone)
     {
         Milestone = milestone ?? throw new ArgumentNullException(nameof(milestone));

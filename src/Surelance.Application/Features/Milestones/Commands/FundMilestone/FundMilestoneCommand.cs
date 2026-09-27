@@ -57,6 +57,11 @@ public class FundMilestoneCommandHandler : IRequestHandler<FundMilestoneCommand,
             return Result.Forbidden("Only the client on this contract can fund this milestone.");
         }
 
+        if (milestone.Contract?.Status != ContractStatus.Active)
+        {
+            return Result.Conflict($"Cannot fund milestone because the contract is in status '{milestone.Contract?.Status}'. The freelancer must accept the contract first.");
+        }
+
         if (milestone.Status != MilestoneStatus.Pending)
         {
             return Result.Conflict($"Cannot fund milestone in status '{milestone.Status}'. Milestone must be in 'Pending' status.");

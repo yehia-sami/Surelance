@@ -108,6 +108,13 @@ public class AuditLoggingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequ
         var response = await next();
         var succeeded = response is not Result result || result.IsSuccess;
 
+        // A failed handler may have mutated entities before bailing out. Saving the audit row
+        // on the same DbContext would commit those half-applied changes, so drop them first.
+        if (!succeeded)
+        {
+            _unitOfWork.DiscardChanges();
+        }
+
         try
         {
             var auditLog = new AuditLog(

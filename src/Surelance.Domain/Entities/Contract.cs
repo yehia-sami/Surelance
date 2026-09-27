@@ -72,11 +72,6 @@ public class Contract : BaseEntity
         Status = ContractStatus.Completed;
     }
 
-    public void CompleteIfAllMilestonesSettled()
-    {
-        Close();
-    }
-
     public void AddMilestone(Milestone milestone)
     {
         _milestones.Add(milestone);

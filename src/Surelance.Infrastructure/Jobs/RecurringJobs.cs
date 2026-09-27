@@ -81,7 +81,7 @@ public class RecurringJobsService : IRecurringJobsService
             }
         }
 
-        // Send reminders for funded milestones approaching or past deadline
+        // Send reminders for funded milestones that are past their deadline
         var pastDeadlineMilestones = await milestoneRepo.GetPendingFundedPastDeadlineAsync(nowUtc);
         foreach (var milestone in pastDeadlineMilestones)
         {
